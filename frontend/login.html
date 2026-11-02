@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="only light">
+    <title>Login — Kuaka Lumpur Metro</title>
+    <meta name="description" content="Sign in to access the admin dashboard for PathFinding — Hoàn Kiếm District.">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="CSS/login.css">
+
+</head>
+<body>
+    <!-- Animated Dot-Grid Background -->
+    <canvas id="dotCanvas"></canvas>
+
+    <div class="login-page">
+        <div class="login-card" id="loginCard">
+            <!-- Branding -->
+            <div class="login-brand">
+                <span class="brand-icon"><i data-lucide="map" style="width:56px;height:56px; stroke-width: 1.5;"></i></span>
+                <h1>Kuala Lumpur Metro</h1>
+                <p>Admin Authentication Portal</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="login-form" autocomplete="on" novalidate>
+                <!-- Username -->
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        autocomplete="username"
+                        placeholder=" "
+                    >
+                    <label for="username">Username</label>
+                </div>
+
+                <!-- Password -->
+                <div class="input-wrapper password-wrapper">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        autocomplete="current-password"
+                        placeholder=" "
+                    >
+                    <label for="password">Password</label>
+                    <button type="button" class="password-toggle" id="passwordToggle" aria-label="Toggle password visibility">
+                        <i data-lucide="eye" style="width:20px;height:20px"></i>
+                    </button>
+                </div>
+
+                <!-- Remember Me -->
+                <div class="remember-row">
+                    <label class="remember-check">
+                        <input type="checkbox" id="rememberMe" checked>
+                        <span>Remember me</span>
+                    </label>
+                </div>
+
+                <!-- Error Message -->
+                <div id="loginError" class="login-error"></div>
+
+                <!-- Submit -->
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <span class="btn-text">Sign In</span>
+                    <div class="spinner-sm"></div>
+                </button>
+            </form>
+
+            <!-- Footer -->
+            <div class="login-footer">
+                <a href="index.html">
+                    <i data-lucide="arrow-left" style="width:16px;height:16px"></i>
+                    Back to Map
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        lucide.createIcons();
+
+        // ──── Dot-Grid Background Animation ────
+        (function initDotGrid() {
+            const canvas = document.getElementById('dotCanvas');
+            const ctx = canvas.getContext('2d');
+            let dots = [];
+            let mouse = { x: -1000, y: -1000 };
+            const GRID_SPACING = 50;
+            const DOT_RADIUS = 1.2;
+            const MOUSE_RADIUS = 120;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                createDots();
+            }
+
+            function createDots() {
+                dots = [];
+                for (let x = GRID_SPACING; x < canvas.width; x += GRID_SPACING) {
+                    for (let y = GRID_SPACING; y < canvas.height; y += GRID_SPACING) {
+                        dots.push({ x, y, baseX: x, baseY: y });
+                    }
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                dots.forEach(dot => {
+                    const dx = mouse.x - dot.baseX;
+                    const dy = mouse.y - dot.baseY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    let alpha = 0.15;
+                    let r = DOT_RADIUS;
+
+                    if (dist < MOUSE_RADIUS) {
+                        const factor = 1 - dist / MOUSE_RADIUS;
+                        alpha = 0.15 + factor * 0.55;
+                        r = DOT_RADIUS + factor * 2;
+                        dot.x = dot.baseX + dx * factor * 0.08;
+                        dot.y = dot.baseY + dy * factor * 0.08;
+                    } else {
+                        dot.x += (dot.baseX - dot.x) * 0.1;
+                        dot.y += (dot.baseY - dot.y) * 0.1;
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(dot.x, dot.y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(232, 150, 221, 0.6)`; // Adjusted color slightly for dark mode
+                    ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+
+            window.addEventListener('resize', resize);
+            document.addEventListener('mousemove', e => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            });
+            document.addEventListener('mouseleave', () => {
+                mouse.x = -1000;
+                mouse.y = -1000;
+            });
+
+            resize();
+            draw();
+        })();
+
+        // ──── Login Logic ────
+        (function initLogin() {
+            const form = document.getElementById('loginForm');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const rememberMe = document.getElementById('rememberMe');
+            const errorDiv = document.getElementById('loginError');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginCard = document.getElementById('loginCard');
+            const toggleBtn = document.getElementById('passwordToggle');
+
+            // Get redirect target from URL params
+            const params = new URLSearchParams(window.location.search);
+            const redirectTarget = params.get('redirect') || 'admin';
+
+            // Check if already logged in
+            (async function checkAuth() {
+                /* Bypassed in this isolated pen, assuming authManager exists from external JS */
+                if(typeof authManager !== 'undefined') {
+                    const valid = await authManager.verifyToken();
+                    if (valid) {
+                        window.location.href = redirectTarget + '.html';
+                    }
+                }
+            })();
+
+            // Password visibility toggle
+            toggleBtn.addEventListener('click', () => {
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                toggleBtn.innerHTML = isPassword
+                    ? '<i data-lucide="eye-off" style="width:20px;height:20px"></i>'
+                    : '<i data-lucide="eye" style="width:20px;height:20px"></i>';
+                lucide.createIcons();
+                passwordInput.focus();
+            });
+
+            // Form submission
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorDiv.classList.remove('show');
+
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value;
+
+                if (!username || !password) {
+                    showError('Please enter both username and password.');
+                    return;
+                }
+
+                // Loading state
+                loginBtn.classList.add('loading');
+                loginBtn.disabled = true;
+
+                // Mock login for demo if authManager is missing
+                let result = { success: false, error: 'Auth logic not found' };
+                if(typeof authManager !== 'undefined') {
+                     result = await authManager.login(username, password, rememberMe.checked);
+                } else {
+                     // Simulate network delay
+                     await new Promise(r => setTimeout(r, 1500));
+                     result = { success: true }; // Thay thành false để test lỗi
+                }
+
+                if (result.success) {
+                    // Success animation
+                    loginCard.classList.add('success');
+                    loginBtn.classList.remove('loading');
+                    loginBtn.querySelector('.btn-text').textContent = '✓ Success';
+                    loginBtn.querySelector('.btn-text').style.opacity = '1';
+
+                    setTimeout(() => {
+                        // Redirect logic here
+                        window.location.href = redirectTarget + '.html';
+                    }, 800);
+                } else {
+                    loginBtn.classList.remove('loading');
+                    loginBtn.disabled = false;
+                    showError(result.error || 'Invalid username or password.');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+            });
+
+            function showError(msg) {
+                errorDiv.textContent = msg;
+                errorDiv.classList.add('show');
+            }
+        })();
+    </script>
+</body>
+</html>

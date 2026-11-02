@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="only light" />
+    <title>Hệ Thống Dẫn Đường Hoàn Kiếm</title>
+    <meta name="description" content="Ứng dụng tìm đường đi ngắn nhất tại quận Hoàn Kiếm bằng thuật toán tối ưu." />
+
+    <!-- Đổi Font sang Roboto để khác bọt -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="CSS/index.css">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    
+
+  </head>
+  <body>
+    <!-- Animated Dot-Grid Background -->
+    <canvas id="dotCanvas"></canvas>
+
+    <div class="container">
+      <!-- Tiêu đề nổi (Header) -->
+      <header class="header">
+        <div class="header-content">
+          <div>
+            <h1><i data-lucide="navigation" class="header-icon"></i> Kuala Lumpur Metro</h1>
+            <p>Hệ thống hỗ trợ tìm ga Metro tối ưu. Chạm để chọn địa điểm.</p>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main -->
+      <main class="main-content">
+        <!-- Sidebar Control Panel đã biến thành Floating Panel -->
+        <aside class="control-panel">
+          <div class="panel-section">
+            <h3 style="display: flex; align-items: center; gap: 8px; margin-top: 0; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0;">
+                <i data-lucide="target" class="section-icon"></i>
+                Thiết Lập Lộ Trình
+            </h3>
+            <p class="instruction" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">
+              Chọn nút "Chấm điểm Bắt Đầu/Kết Thúc" hoặc nhập trực tiếp tọa độ (X, Y) để tìm.
+            </p>
+
+            <!-- Start Point -->
+            <div class="input-group">
+              <label for="startX">Start Point</label>
+              <div class="coordinate-inputs">
+                <input type="number" id="startX" placeholder="Vĩ độ X" step="any" />
+                <input type="number" id="startY" placeholder="Kinh độ Y" step="any" />
+              </div>
+              <button id="selectStartBtn" class="btn btn-outline">
+                <i data-lucide="map-pin" style="width:16px;height:16px"></i>
+                Chấm điểm BẮT ĐẦU
+              </button>
+            </div>
+
+            <!-- End Point -->
+            <div class="input-group">
+              <label for="endX">End Point</label>
+              <div class="coordinate-inputs">
+                <input type="number" id="endX" placeholder="Vĩ độ X" step="any" />
+                <input type="number" id="endY" placeholder="Kinh độ Y" step="any" />
+              </div>
+              <button id="selectEndBtn" class="btn btn-outline">
+                <i data-lucide="flag" style="width:16px;height:16px"></i>
+                Chấm điểm KẾT THÚC
+              </button>
+            </div>
+                        
+
+            <!-- Phương tiện -->
+            <div class="vehicle-row">
+              <button id="btnFoot" class="btn vehicle-btn active">
+                <i data-lucide="person-standing" style="width:18px;height:18px"></i>
+                Đi bộ
+              </button>
+              <button id="btnMotorbike" class="btn vehicle-btn">
+                <i data-lucide="bike" style="width:18px;height:18px"></i>
+                Xe máy
+              </button>
+              <button id="btnCar" class="btn vehicle-btn">
+                <i data-lucide="car-front" style="width:18px;height:18px"></i>
+                Ô tô
+              </button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-row" style="display: flex; gap: 8px;">
+              <button id="findPathBtn" class="btn btn-metro">
+                <i data-lucide="train" style="width:18px;height:18px"></i>
+                Tìm Tuyến Metro
+              </button>
+
+              <button id="findRoadBtn" class="btn btn-road">
+                <i data-lucide="navigation-2" style="width:18px;height:18px"></i>
+                Tìm Đường Đi
+              </button>
+            </div>
+            <div style="margin-top: 8px;">
+              <button id="clearBtn" class="btn btn-clear" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <i data-lucide="trash-2" style="width:16px;height:16px"></i>
+                Xóa lộ trình hiện tại
+              </button>
+            </div>
+          </div>
+
+          <!-- Thông tin lộ trình -->
+          <div class="panel-section" style="margin-top: 15px;">
+            <h3>
+              <i data-lucide="activity" class="section-icon"></i>
+              Chi Tiết Hành Trình
+            </h3>
+            <div id="pathInfo" class="path-info">
+              <p class="no-data" style="color:#94a3b8; font-style: italic; font-size: 0.9rem;">Chưa có dữ liệu tuyến đường...</p>
+            </div>
+          </div>
+
+          <!-- Admin Link -->
+          <div class="panel-section admin-link">
+            <a href="admin.html" class="btn btn-link">
+              <i data-lucide="settings" style="width:15px;height:15px"></i>
+              Chuyển sang chế độ Quản trị
+            </a>
+          </div>
+        </aside>
+
+        <!-- Bản đồ -->
+        <div class="map-wrapper">
+          <div id="map"></div>
+          <div id="statusBar" class="status-bar">
+            <i data-lucide="bell-ring" style="width:16px;height:16px;flex-shrink:0"></i>
+            <span id="statusMessage">Sẵn sàng! Vui lòng chọn điểm trên bản đồ.</span>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Màn hình chờ -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none">
+      <div class="spinner"></div>
+      <p style="margin-top:15px; font-weight:500; color:#334155;">Đang tính toán tuyến đường tối ưu...</p>
+    </div>
+
+    <!-- Scripts (Giữ nguyên không đổi) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/config.js?v=20260528"></script>
+    <script src="js/map.js?v=20260528"></script>
+    <script src="js/pathfinding.js?v=20260528"></script>
+    <script src="js/history.js?v=20260528"></script>
+    <script>lucide.createIcons();</script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    
+    <script>
+        // ──── Dot-Grid Background Animation (Same as Admin) ────
+        (function initDotGrid() {
+            const canvas = document.getElementById('dotCanvas');
+            const ctx = canvas.getContext('2d');
+            let dots = [];
+            let mouse = { x: -1000, y: -1000 };
+            const GRID_SPACING = 50;
+            const DOT_RADIUS = 1.2;
+            const MOUSE_RADIUS = 120;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                createDots();
+            }
+
+            function createDots() {
+                dots = [];
+                for (let x = GRID_SPACING; x < canvas.width; x += GRID_SPACING) {
+                    for (let y = GRID_SPACING; y < canvas.height; y += GRID_SPACING) {
+                        dots.push({ x, y, baseX: x, baseY: y });
+                    }
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                dots.forEach(dot => {
+                    const dx = mouse.x - dot.baseX;
+                    const dy = mouse.y - dot.baseY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    let alpha = 0.15;
+                    let r = DOT_RADIUS;
+
+                    if (dist < MOUSE_RADIUS) {
+                        const factor = 1 - dist / MOUSE_RADIUS;
+                        alpha = 0.15 + factor * 0.55;
+                        r = DOT_RADIUS + factor * 2;
+                        dot.x = dot.baseX + dx * factor * 0.08;
+                        dot.y = dot.baseY + dy * factor * 0.08;
+                    } else {
+                        dot.x += (dot.baseX - dot.x) * 0.1;
+                        dot.y += (dot.baseY - dot.y) * 0.1;
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(dot.x, dot.y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(13, 148, 136, ${alpha})`;
+                    ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+
+            window.addEventListener('resize', resize);
+            document.addEventListener('mousemove', e => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            });
+            document.addEventListener('mouseleave', () => {
+                mouse.x = -1000;
+                mouse.y = -1000;
+            });
+
+            resize();
+            draw();
+        })();
+    </script>
+  </body>
+  
+</html>

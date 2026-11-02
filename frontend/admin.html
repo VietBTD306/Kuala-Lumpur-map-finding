@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="only light">
+    <title>Admin Dashboard - PathFinding App</title>
+    <meta name="description" content="Admin dashboard for managing PathFinding KL Metro." />
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="CSS/admin.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- App styles -->
+    <link rel="stylesheet" href="css/admin.css">
+
+    <!-- Thêm CSS giao diện đồng bộ với trang Login -->
+    
+</head>
+<body>
+    <!-- Animated Dot-Grid Background -->
+    <canvas id="dotCanvas"></canvas>
+
+    <!-- Main Admin Dashboard -->
+    <div id="adminDashboard" style="display: none;">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1><i data-lucide="map" class="header-icon" style="width:28px;height:28px"></i> Quản Trị Metro Kuala Lumpur</h1>
+                <div class="user-info">
+                    <span id="welcomeMessage">Chào mừng, Admin</span>
+                    <button id="logoutBtn" class="btn btn-secondary">
+                        <i data-lucide="log-out" style="width:16px;height:16px"></i>
+                        Đăng xuất
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="dashboard-container">
+            <!-- Sidebar Controls -->
+            <aside class="sidebar">
+                <div class="control-panel">
+                    <h3>Điều khiển Kịch bản</h3>
+                    
+                    <div class="control-section">
+                        <h4><i data-lucide="cloud-rain" class="section-icon"></i> Kịch bản Mưa</h4>
+                        <div class="button-group">
+                            <button class="btn btn-scenario" data-scenario="rain-light">
+                                Mưa nhỏ
+                            </button>
+                            <button class="btn btn-scenario" data-scenario="rain-medium">
+                                Mưa vừa
+                            </button>
+                            <button class="btn btn-scenario" data-scenario="rain-heavy">
+                                Mưa lớn
+                            </button>
+                            <button class="btn btn-scenario" data-scenario="rain-extreme">
+                                Bão
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <h4><i data-lucide="subway" class="section-icon"></i> Chặn tuyến metro</h4>
+                        <button class="btn btn-scenario" data-scenario="metro-block">
+                            Chặn tuyến metro
+                        </button>
+                    </div>
+
+                    <div class="control-section">
+                        <h4><i data-lucide="plus" class="section-icon"></i> Hành động</h4>
+                        <button id="applyScenarioBtn" class="btn btn-primary" style="background: var(--primary); border-color: var(--primary); color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);">
+                            <i data-lucide="plus-circle" style="width:16px;height:16px"></i>
+                            Tạo Kịch Bản
+                        </button>
+                    </div>
+
+                    <div class="control-section">
+                        <h4><i data-lucide="settings-2" class="section-icon"></i> Quản lý kịch bản</h4>
+                        <div class="button-group">
+                            <button id="toggleDeleteBtn" class="btn btn-warning">
+                                <i data-lucide="trash-2" style="width:16px;height:16px"></i>
+                                Xóa từng kịch bản
+                            </button>
+                            <button id="clearAllBtn" class="btn btn-danger">
+                                <i data-lucide="x-circle" style="width:16px;height:16px"></i>
+                                Xóa toàn bộ kịch bản
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="instructions">
+                    <h4><i data-lucide="file-text" class="section-icon"></i> Hướng dẫn</h4>
+                    <ol>
+                        <li>Chọn một loại kịch bản ở trên</li>
+                        <li>Nhấp chọn các điểm trên bản đồ để xác định vùng ảnh hưởng</li>
+                        <li>Kịch bản sẽ được áp dụng cho các tuyến/cung đường lân cận</li>
+                        <li>Sử dụng nút Xóa/Hủy để thiết lập lại</li>
+                    </ol>
+                </div>
+            </aside>
+
+            <!-- Map Container -->
+            <main class="map-container">
+                <div id="map"></div>
+                <div id="statusBar" class="status-bar">
+                    <span id="statusMessage">Ready. Select a scenario to begin.</span>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/config.js?v=20260528"></script>
+    <script src="js/auth.js?v=20260528"></script>
+    <script src="js/admin.js?v=20260528"></script>
+    
+    <script>
+        // Init icons
+        lucide.createIcons();
+
+        // ──── Dot-Grid Background Animation (Same as Login) ────
+        (function initDotGrid() {
+            const canvas = document.getElementById('dotCanvas');
+            const ctx = canvas.getContext('2d');
+            let dots = [];
+            let mouse = { x: -1000, y: -1000 };
+            const GRID_SPACING = 50;
+            const DOT_RADIUS = 1.2;
+            const MOUSE_RADIUS = 120;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                createDots();
+            }
+
+            function createDots() {
+                dots = [];
+                for (let x = GRID_SPACING; x < canvas.width; x += GRID_SPACING) {
+                    for (let y = GRID_SPACING; y < canvas.height; y += GRID_SPACING) {
+                        dots.push({ x, y, baseX: x, baseY: y });
+                    }
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                dots.forEach(dot => {
+                    const dx = mouse.x - dot.baseX;
+                    const dy = mouse.y - dot.baseY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    let alpha = 0.15;
+                    let r = DOT_RADIUS;
+
+                    if (dist < MOUSE_RADIUS) {
+                        const factor = 1 - dist / MOUSE_RADIUS;
+                        alpha = 0.15 + factor * 0.55;
+                        r = DOT_RADIUS + factor * 2;
+                        dot.x = dot.baseX + dx * factor * 0.08;
+                        dot.y = dot.baseY + dy * factor * 0.08;
+                    } else {
+                        dot.x += (dot.baseX - dot.x) * 0.1;
+                        dot.y += (dot.baseY - dot.y) * 0.1;
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(dot.x, dot.y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(13, 148, 136, ${alpha})`;
+                    ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+
+            window.addEventListener('resize', resize);
+            document.addEventListener('mousemove', e => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            });
+            document.addEventListener('mouseleave', () => {
+                mouse.x = -1000;
+                mouse.y = -1000;
+            });
+
+            resize();
+            draw();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,744 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {
+  --bg-base: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --border: rgba(255, 255, 255, 0.1);
+  --primary: #0d9488;
+  --primary-hover: #0f766e;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --danger: #e11d48;
+  --warning: #d97706;
+}
+      
+      body {
+        font-family: 'Inter', sans-serif !important;
+        background-color: var(--bg-base);
+        color: var(--text-main);
+        margin: 0;
+        padding: 0;
+        overflow: hidden; /* Chống cuộn trang */
+      }
+      
+      canvas#dotCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      /* Ép layout thành Full map */
+      .container {
+        display: block !important;
+        height: 100vh;
+        width: 100vw;
+        position: relative;
+      }
+
+      .main-content {
+        display: block !important;
+        height: 100%;
+        width: 100%;
+      }
+
+      .map-wrapper {
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 1;
+      }
+
+      #map {
+        width: 100% !important;
+        height: 100vh !important;
+      }
+
+      /* Panel điều khiển nổi trên bản đồ */
+      .header {
+        position: absolute;
+        top: 35px;
+        left: 20px;
+        z-index: 1000;
+        background: var(--surface);
+        padding: 15px 20px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        width: 340px;
+        box-sizing: border-box;
+        border: 1px solid var(--border);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .header h1 {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 1.25rem !important;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 5px 0 !important;
+      }
+
+      .header .header-icon {
+        color: var(--primary);
+      }
+
+      .header p {
+        font-size: 0.85rem !important;
+        color: var(--text-muted);
+        margin: 0 !important;
+        line-height: 1.4;
+      }
+
+      .control-panel {
+        position: absolute;
+        top: 150px;
+        left: 20px;
+        z-index: 1000;
+        background: var(--surface);
+        width: 340px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        padding: 20px;
+        box-sizing: border-box;
+        max-height: calc(100vh - 170px);
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .control-panel::-webkit-scrollbar {
+        width: 6px;
+      }
+      .control-panel::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 10px;
+      }
+
+      .panel-section h3 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1rem;
+        color: var(--primary);
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 8px;
+        margin-top: 0;
+      }
+
+      .input-group {
+        background: #0f172a;
+        border: 1px solid var(--border);
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+      }
+
+      .input-group label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+      }
+
+      .coordinate-inputs {
+        display: flex;
+        gap: 10px;
+        margin: 8px 0;
+      }
+
+      .coordinate-inputs input {
+        flex: 1;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        background: #1e293b;
+        color: var(--text-main);
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 0.9rem;
+        outline: none;
+        transition: all 0.2s ease;
+      }
+
+      .coordinate-inputs input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 10px rgba(13, 148, 136, 0.4);
+      }
+
+      .btn {
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        text-transform: none !important;
+        transition: all 0.2s ease;
+      }
+
+      .btn-outline {
+        background: transparent !important;
+        border: 1px solid var(--primary) !important;
+        color: var(--primary) !important;
+        width: 100%;
+        padding: 8px !important;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      }
+      
+      .btn-outline:hover {
+        background: var(--primary) !important;
+        color: white !important;
+        box-shadow: 0 0 12px rgba(13, 148, 136, 0.3) !important;
+      }
+
+      .btn-outline.active {
+        background: var(--primary) !important;
+        color: white !important;
+        box-shadow: 0 0 12px rgba(13, 148, 136, 0.5) !important;
+        border-color: var(--primary) !important;
+      }
+
+      .vehicle-row {
+        background: #0f172a;
+        border: 1px solid var(--border);
+        padding: 4px;
+        border-radius: 8px;
+        display: flex;
+        gap: 5px;
+        margin-bottom: 15px;
+      }
+
+      .vehicle-btn {
+        flex: 1;
+        background: transparent !important;
+        border: none !important;
+        color: var(--text-muted) !important;
+        box-shadow: none !important;
+        cursor: pointer;
+        padding: 8px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 6px;
+      }
+
+      .vehicle-btn:hover {
+        color: var(--text-main) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+      }
+
+      .vehicle-btn.active {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3) !important;
+        transform: scale(1.02);
+      }
+
+      .action-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .btn-primary {
+        background: var(--primary) !important;
+        border: 1px solid var(--primary) !important;
+        color: white !important;
+      }
+      .btn-primary:hover {
+        background: var(--primary-hover) !important;
+        border-color: var(--primary-hover) !important;
+        box-shadow: 0 0 15px rgba(13, 148, 136, 0.4) !important;
+      }
+      .btn-success {
+        background: #10b981 !important;
+        border: 1px solid #10b981 !important;
+        color: white !important;
+      }
+      .btn-success:hover {
+        background: #059669 !important;
+        border-color: #059669 !important;
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.4) !important;
+      }
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text-muted) !important;
+      }
+      .btn-secondary:hover {
+        background: rgba(225, 29, 72, 0.1) !important;
+        border-color: var(--danger) !important;
+        color: #fca5a5 !important;
+      }
+
+      /* Premium styles for new route action buttons */
+      .btn-metro {
+        flex: 1;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        padding: 12px 14px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        background: linear-gradient(135deg, #f472b6 0%, #db2777 100%) !important;
+        border: none !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(244, 114, 182, 0.2) !important;
+        cursor: pointer !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        white-space: nowrap;
+        border-radius: 8px !important;
+      }
+      .btn-metro:hover {
+        background: linear-gradient(135deg, #ec4899 0%, #be185d 100%) !important;
+        box-shadow: 0 6px 16px rgba(244, 114, 182, 0.35) !important;
+        transform: translateY(-1px);
+      }
+      
+      .btn-road {
+        flex: 1;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        padding: 12px 14px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        border: none !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2) !important;
+        cursor: pointer !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        white-space: nowrap;
+        border-radius: 8px !important;
+      }
+      .btn-road:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35) !important;
+        transform: translateY(-1px);
+      }
+      
+      .btn-clear {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        padding: 10px 16px !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text-muted) !important;
+        cursor: pointer !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        white-space: nowrap;
+        border-radius: 8px !important;
+      }
+      .btn-clear:hover {
+        background: rgba(239, 68, 68, 0.1) !important;
+        border-color: #ef4444 !important;
+        color: #fca5a5 !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15) !important;
+        transform: translateY(-1px);
+      }
+
+      /* Căn chỉnh thanh trạng thái */
+      .status-bar {
+        position: fixed !important;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        color: var(--text-main) !important;
+        padding: 10px 20px !important;
+        border-radius: 30px !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+        z-index: 1000;
+        font-size: 0.9rem;
+      }
+
+      .admin-link {
+        margin-top: 20px;
+        text-align: center;
+      }
+      
+      .admin-link a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.2s ease;
+      }
+      .admin-link a:hover {
+        color: var(--primary);
+      }
+
+      /* Tùy chỉnh Loader */
+      #loadingOverlay {
+        background: rgba(15, 23, 42, 0.8) !important;
+        backdrop-filter: blur(5px);
+      }
+      #loadingOverlay p {
+        color: var(--text-main) !important;
+      }
+      .spinner {
+        border-top-color: var(--primary) !important;
+      }
+      /* Ngăn chặn Dark Mode của trình duyệt/tiện ích lật màu bản đồ */
+.leaflet-container,
+.leaflet-container * {
+    filter: none !important;
+    -webkit-filter: none !important;
+    color-scheme: only light !important;
+}
+
+/* Đảm bảo nền map không bị lật màu đen */
+.leaflet-container {
+    background: #e5e5e5 !important;
+}
+/* Biểu tượng ga Metro thiết kế Hi-tech */
+.station-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+    border: 2px solid #2563eb;
+    border-radius: 50%;
+    color: #1d4ed8;
+    
+    /* Hiệu ứng đổ bóng 2 lớp tạo độ nổi khối (Material Design) */
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+    
+    /* Vòng tròn kép trang trí bên trong */
+    outline: 2px dashed rgba(37, 99, 235, 0.3);
+    outline-offset: -5px;
+    
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hiệu ứng tương tác chuyển màu và phóng to khi rê chuột */
+.station-icon:hover {
+    transform: scale(1.18) rotate(3deg);
+    color: #ffffff;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border-color: #1e40af;
+    outline: 2px dashed rgba(255, 255, 255, 0.4);
+    outline-offset: -5px;
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Nhãn tên ga đồng bộ */
+.station-label {
+    background: rgba(15, 23, 42, 0.9); /* Đổi sang nền darkmode sang xịn mịn */
+    color: #ffffff;
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+}
+
+/* Custom Metro Toggle Button */
+.custom-metro-toggle {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    /* Không dùng margin-top vì Metro đã được đưa lên đầu cột */
+}
+
+.metro-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Tăng khoảng cách giữa các thành phần */
+    background: #ffffff;
+    backdrop-filter: blur(12px);
+    border: 2px solid rgba(0, 0, 0, 0.2); /* Viền màu xám đồng bộ hoàn hảo với hộp Layer Control */
+    padding: 10px 18px; /* Tăng padding để nút to và rộng hơn */
+    border-radius: 8px; /* Bo góc ít hơn */
+    cursor: pointer;
+    font-family: 'Dancing Script', 'Roboto', sans-serif; /* Phông chữ Dancing Script mềm mại điệu nghệ */
+    font-weight: 700;
+    font-size: 1.45rem; /* Tăng cỡ chữ to và rõ ràng hơn hẳn */
+    color: #475569;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    height: 46px;
+    box-sizing: border-box;
+}
+
+.metro-toggle-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.25),
+        transparent
+    );
+    transition: 0.5s;
+}
+
+.metro-toggle-btn:hover::before {
+    left: 100%;
+}
+
+.metro-toggle-btn i {
+    width: 20px; /* Điều chỉnh kích thước hiển thị cân bằng */
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+.metro-toggle-btn i svg {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+.metro-toggle-btn:hover {
+    background: #ffffff;
+    color: #f472b6;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(244, 114, 182, 0.15);
+    border-color: rgba(0, 0, 0, 0.35); /* Viền xám sẫm hơn một chút khi hover */
+}
+
+.metro-toggle-btn:hover i {
+    color: #f472b6;
+    transform: scale(1.1);
+}
+
+/* Đèn LED chỉ thị trạng thái */
+.indicator-dot {
+    width: 8px; /* Tăng kích thước chấm LED trạng thái */
+    height: 8px;
+    border-radius: 50%;
+    background-color: #cbd5e1;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+/* Trạng thái Active (Mở bản đồ Metro) - Nền màu hồng dịu nhẹ nhàng (màu đơn sắc) */
+.metro-toggle-btn.active {
+    background: #f472b6;
+    border: 2px solid rgba(0, 0, 0, 0.2); /* Giữ nguyên viền xám đồng bộ hộp Layer */
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(244, 114, 182, 0.35);
+}
+
+.metro-toggle-btn.active i {
+    color: #ffffff;
+}
+
+.metro-toggle-btn.active .indicator-dot {
+    background-color: #ffffff;
+    box-shadow: 0 0 8px #ffffff, 0 0 15px #ffffff;
+    animation: led-pulse-white 1.5s infinite alternate;
+}
+
+.metro-toggle-btn.active:hover {
+    transform: translateY(-2px);
+    background: #ec4899;
+    box-shadow: 0 6px 22px rgba(244, 114, 182, 0.55);
+    border-color: rgba(0, 0, 0, 0.35); /* Giữ nguyên viền xám sẫm khi hover active */
+}
+
+@keyframes led-pulse-white {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+        box-shadow: 0 0 4px #ffffff;
+    }
+    100% {
+        transform: scale(1.25);
+        opacity: 1;
+        box-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff;
+    }
+}
+
+/* Custom Layer Switcher (Google Maps style - Metro-matching theme) */
+.custom-layer-switcher {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 10px !important; /* Khoảng cách dưới Metro Control vừa được đưa lên */
+}
+
+.layer-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #ffffff;
+    backdrop-filter: blur(12px);
+    border: 2px solid rgba(0, 0, 0, 0.2); /* Viền màu xám đồng bộ hoàn hảo với hộp Layer Control & Metro Control */
+    padding: 10px 18px; /* Padding đồng bộ với Metro button */
+    border-radius: 8px; /* Bo góc ít hơn */
+    cursor: pointer;
+    font-family: 'Dancing Script', 'Roboto', sans-serif; /* PHÔNG CHỮ ĐỒNG BỘ: 'Dancing Script' điệu nghệ */
+    font-weight: 700;
+    font-size: 1.45rem; /* CỠ CHỮ ĐỒNG BỘ: To bằng nút Metro */
+    color: #475569;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 46px;
+    width: 130px;
+    box-sizing: border-box;
+}
+
+.layer-trigger i {
+    width: 20px; /* Tăng kích thước bao ngoài để bù độ mảnh của icon layers */
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+.layer-trigger i svg {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+.layer-trigger:hover {
+    color: #f472b6;
+    background: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(244, 114, 182, 0.15);
+    border-color: rgba(0, 0, 0, 0.35); /* Viền xám sẫm hơn một chút khi hover */
+}
+
+.layer-trigger:hover i {
+    transform: scale(1.1);
+}
+
+.layer-options {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px); /* ĐẨY XUỐNG DƯỚI: Đặt phía dưới nút Bản đồ */
+    display: flex;
+    gap: 12px;
+    background: #ffffff;
+    backdrop-filter: blur(16px);
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    border-radius: 12px; /* Bo góc ít hơn */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.9) translateY(-10px);
+    transform-origin: top right; /* Hiệu ứng mở rộng từ góc trên bên phải */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1001;
+}
+
+/* Hiển thị danh sách card khi hover */
+.custom-layer-switcher:hover .layer-options,
+.custom-layer-switcher:focus-within .layer-options {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1) translateY(0);
+}
+
+.layer-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    width: 116px; /* Chiều rộng thẻ */
+    transition: all 0.2s ease;
+}
+
+.layer-thumbnail {
+    width: 116px; /* Rộng 5/3 lần (từ 70px) */
+    height: 86px; /* Cao 5/3 lần (từ 52px) */
+    border-radius: 8px; /* Bo góc ít hơn */
+    position: relative;
+    overflow: hidden;
+    border: 2px solid #cbd5e1;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: all 0.25s ease;
+}
+
+/* Sử dụng hình nền đặc trưng chụp từ bản đồ thực tế của bạn */
+.simple-thumb {
+    background-image: url('https://a.basemaps.cartocdn.com/light_all/12/3204/2012.png');
+}
+
+.detail-thumb {
+    background-image: url('https://a.tile.openstreetmap.org/12/3204/2012.png');
+}
+
+/* Nhãn chữ phủ mờ kiểu Google Maps ở đáy ảnh */
+.layer-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.65); /* Nền tối mờ nhẹ */
+    backdrop-filter: blur(4px);
+    color: #ffffff;
+    font-size: 1.15rem; /* Cỡ chữ Dancing Script uốn lượn dễ đọc */
+    font-weight: 700;
+    text-align: center;
+    padding: 2px 0 6px 0;
+    font-family: 'Dancing Script', 'Roboto', sans-serif; /* PHÔNG CHỮ ĐỒNG BỘ VỚI METRO */
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+/* Hover các card */
+.layer-card:hover .layer-thumbnail {
+    transform: translateY(-2px);
+    border-color: #f472b6;
+    box-shadow: 0 4px 12px rgba(244, 114, 182, 0.25);
+}
+
+.layer-card:hover .layer-label {
+    background: rgba(244, 114, 182, 0.85); /* Chuyển sang nhãn hồng khi hover */
+}
+
+/* Card đang hoạt động (Active) */
+.layer-card.active .layer-thumbnail {
+    border-color: #f472b6;
+    box-shadow: 0 0 0 2px rgba(244, 114, 182, 0.3), 0 4px 14px rgba(244, 114, 182, 0.25);
+    transform: translateY(-2px) scale(1.03);
+}
+
+.layer-card.active .layer-label {
+    background: #f472b6; /* Nhãn màu hồng sáng khi được chọn */
+}
+
+
+
+
